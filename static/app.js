@@ -127,13 +127,21 @@ async function loadAllParties() {
 
 // ═══════════════════════ COMPUTE PARTY STATS ═══════════════════════
 function getPartyStats() {
-    // If OnlineKhabar API data is available, use it (most up-to-date, refreshed every 5s)
+    // If OnlineKhabar API data is available, use it for seat counts (most up-to-date, refreshed every 5s)
     const okh = summaryData && summaryData.okh_party_summary;
     if (okh && okh.parties && okh.parties.length > 0) {
         const okhMap = {};
         okh.parties.forEach(p => {
             if (p.party_short) okhMap[p.party_short] = p;
         });
+
+        // Build pratakshya (direct FPTP) votes map from DB
+        const dbVotesMap = {};
+        if (summaryData && summaryData.party_votes) {
+            summaryData.party_votes.forEach(v => {
+                dbVotesMap[v.short_name] = v.total_votes;
+            });
+        }
 
         // Merge with party info from allParties
         const merged = allParties.map(p => {
@@ -148,7 +156,7 @@ function getPartyStats() {
                 leading: o.leading || 0,
                 won: o.won || 0,
                 total_seats: o.total || 0,
-                total_votes: o.samanupatik || 0,
+                total_votes: dbVotesMap[p.short_name] || 0,
             };
         });
         merged.sort((a, b) => b.total_seats - a.total_seats || b.total_votes - a.total_votes || a.name.localeCompare(b.name));
