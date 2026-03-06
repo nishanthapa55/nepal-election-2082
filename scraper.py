@@ -355,35 +355,19 @@ class EkantipurScraper(BaseScraper):
         batch = all_urls[:]
         logger.info(f"[Ekantipur] Fetching all {len(batch)} constituencies")
 
-        # Fetch pages with thread pool — 20 workers for reliable parallel fetching
+        # Fetch pages with thread pool — 20 workers for fast parallel fetching
         def fetch_one(item):
             cid, cname, url = item
-            for attempt in range(3):
-                try:
-                    resp = self.fetch(url, timeout=12)
-                    if len(resp.text) < 5000:
-                        # Page too small — likely blocked or empty; retry
-                        if attempt < 2:
-                            time.sleep(1)
-                            continue
-                    page_results = self._parse_constituency_page(resp.text, cname)
-                    if page_results:
-                        return page_results, None
-                    # Got HTML but no candidates — could be transient; retry
-                    if attempt < 2:
-                        time.sleep(0.5)
-                        continue
-                    return page_results, None
-                except Exception as e:
-                    if attempt < 2:
-                        time.sleep(1)
-                        continue
-                    return [], f"{cname}: {str(e)[:80]}"
-            return [], f"{cname}: all retries failed"
+            try:
+                resp = self.fetch(url, timeout=12)
+                page_results = self._parse_constituency_page(resp.text, cname)
+                return page_results, None
+            except Exception as e:
+                return [], f"{cname}: {str(e)[:80]}"
 
         with ThreadPoolExecutor(max_workers=20) as executor:
             futures = {executor.submit(fetch_one, item): item for item in batch}
-            for future in as_completed(futures, timeout=60):
+            for future in as_completed(futures, timeout=120):
                 try:
                     page_results, error = future.result(timeout=15)
                     results.extend(page_results)
