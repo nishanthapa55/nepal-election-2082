@@ -409,6 +409,13 @@ class EkantipurScraper(BaseScraper):
                 # Check if this candidate is leading (has "win" class)
                 is_leading = "win" in (vote_div.get("class") or [])
                 
+                # Check if officially elected (span contains "Elected" text)
+                is_elected = False
+                if is_leading:
+                    vote_span = vote_div.find("span")
+                    if vote_span and "elected" in vote_span.get_text().lower():
+                        is_elected = True
+                
                 party_short = resolve_party(party_name)
                 
                 results.append({
@@ -419,6 +426,7 @@ class EkantipurScraper(BaseScraper):
                     "constituency": constituency_name,
                     "source": "ekantipur",
                     "is_leading": is_leading,
+                    "is_elected": is_elected,
                 })
             except Exception as e:
                 logger.debug(f"[Ekantipur] Row parse error in {constituency_name}: {e}")
@@ -834,24 +842,45 @@ class ScraperCoordinator:
             candidate_id=candidate.id,
         ).first()
 
+        is_elected = result.get("is_elected", False)
+        changed = 0
+
         if existing_result:
             if votes > existing_result.votes:
                 existing_result.votes = votes
                 existing_result.party_id = party.id if party else existing_result.party_id
                 existing_result.updated_at = datetime.now(timezone.utc)
-                return 1
-            return 0
+                changed = 1
+            # Mark winner if officially elected
+            if is_elected and not existing_result.is_winner:
+                existing_result.is_winner = True
+                existing_result.updated_at = datetime.now(timezone.utc)
+                changed = 1
         else:
             new_result = Result(
                 constituency_id=constituency.id,
                 candidate_id=candidate.id,
                 party_id=party.id if party else None,
                 votes=votes,
+                is_winner=is_elected,
             )
             db.session.add(new_result)
             if constituency.status == "pending":
                 constituency.status = "counting"
-            return 1
+            changed = 1
+
+        # Update constituency status to declared if a winner exists
+        if is_elected and constituency.status != "declared":
+            constituency.status = "declared"
+            logger.info(f"WINNER DECLARED: {candidate_name} in {constituency_name}")
+            # Reset is_winner for other candidates in same constituency
+            Result.query.filter(
+                Result.constituency_id == constituency.id,
+                Result.candidate_id != candidate.id,
+            ).update({"is_winner": False})
+            changed = 1
+
+        return changed
 
     def _log_run(self, updated, errors, elapsed):
         try:
