@@ -49,8 +49,8 @@ DISTRICTS = {
 
 # Number of federal HoR constituencies per district (165 FPTP seats)
 CONSTITUENCY_COUNTS = {
-    # Province 1 - Koshi (28 seats)
-    "Taplejung": 1, "Panchthar": 2, "Ilam": 2, "Jhapa": 4, "Morang": 6,
+    # Province 1 - Koshi (29 seats)
+    "Taplejung": 1, "Panchthar": 2, "Ilam": 2, "Jhapa": 5, "Morang": 6,
     "Sunsari": 3, "Dhankuta": 1, "Terhathum": 1, "Sankhuwasabha": 1,
     "Bhojpur": 1, "Solukhumbu": 1, "Okhaldhunga": 1, "Khotang": 2, "Udayapur": 2,
     # Province 2 - Madhesh (32 seats)
@@ -62,7 +62,7 @@ CONSTITUENCY_COUNTS = {
     "Ramechhap": 1, "Sindhuli": 2, "Makwanpur": 2, "Chitwan": 3,
     # Province 4 - Gandaki (18 seats)
     "Gorkha": 2, "Lamjung": 1, "Tanahu": 2, "Syangja": 2, "Kaski": 3,
-    "Manang": 1, "Mustang": 1, "Myagdi": 1, "Parbat": 1, "Baglung": 2, "Nawalparasi East": 2,
+    "Manang": 0, "Mustang": 1, "Myagdi": 1, "Parbat": 1, "Baglung": 2, "Nawalparasi East": 2,
     # Province 5 - Lumbini (24 seats)
     "Nawalparasi West": 2, "Rupandehi": 5, "Kapilvastu": 3, "Palpa": 1,
     "Arghakhanchi": 1, "Gulmi": 1, "Pyuthan": 1, "Rolpa": 1, "Eastern Rukum": 1,
