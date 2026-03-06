@@ -242,11 +242,6 @@ class EkantipurScraper(BaseScraper):
     timeout = 15
 
     BASE = "https://election.ekantipur.com"
-    # After counting constituencies are identified, fetch them every cycle
-    # plus a rotating batch of the rest to discover new counting areas
-    DISCOVERY_BATCH = 40  # How many unknown constituencies to check each cycle
-
-    _rotation_index = 0
 
     def _build_constituency_urls(self):
         """Build list of (constituency_id, name, url) from database."""
@@ -282,50 +277,25 @@ class EkantipurScraper(BaseScraper):
         if not all_urls:
             return [], ["No constituency URLs generated"]
 
-        # Prioritize actively-counting constituencies
-        try:
-            counting_ids = set(
-                c.id for c in Constituency.query.filter_by(status="counting").all()
-            )
-        except Exception:
-            counting_ids = set()
+        # Fetch ALL constituencies every cycle for maximum coverage and speed
+        batch = all_urls[:]
+        logger.info(f"[Ekantipur] Fetching all {len(batch)} constituencies")
 
-        priority = [(cid, name, url) for cid, name, url in all_urls if cid in counting_ids]
-        rest = [(cid, name, url) for cid, name, url in all_urls if cid not in counting_ids]
-
-        # Always fetch ALL counting constituencies + a discovery batch of the rest
-        # On first run (no counting yet), fetch all 165 to quickly find active ones
-        if not counting_ids:
-            # First run: scan everything to discover active constituencies
-            batch = all_urls[:]
-            logger.info(f"[Ekantipur] First run: scanning all {len(batch)} constituencies")
-        else:
-            # Subsequent runs: all counting + random discovery batch
-            batch = priority[:]
-            if rest:
-                random.shuffle(rest)
-                batch.extend(rest[:self.DISCOVERY_BATCH])
-            logger.info(f"[Ekantipur] Fetching {len(batch)} constituencies "
-                        f"({len(priority)} counting, {len(batch) - len(priority)} discovery)")
-
-        logger.info(f"[Ekantipur] Fetching {len(batch)} constituencies "
-                    f"({len(priority)} counting, {len(batch) - len(priority)} rotating)")
-
-        # Fetch pages with thread pool
+        # Fetch pages with thread pool — 25 workers for fast parallel fetching
         def fetch_one(item):
             cid, cname, url = item
             try:
-                resp = self.fetch(url, timeout=12)
+                resp = self.fetch(url, timeout=10)
                 page_results = self._parse_constituency_page(resp.text, cname)
                 return page_results, None
             except Exception as e:
                 return [], f"{cname}: {str(e)[:80]}"
 
-        with ThreadPoolExecutor(max_workers=10) as executor:
+        with ThreadPoolExecutor(max_workers=25) as executor:
             futures = {executor.submit(fetch_one, item): item for item in batch}
-            for future in as_completed(futures, timeout=120):
+            for future in as_completed(futures, timeout=60):
                 try:
-                    page_results, error = future.result(timeout=30)
+                    page_results, error = future.result(timeout=15)
                     results.extend(page_results)
                     if error:
                         errors.append(error)
@@ -490,25 +460,27 @@ class OnlineKhabarScraper(BaseScraper):
         if not all_urls:
             return [], ["No constituency URLs generated"]
 
-        # ONLY fetch constituencies already identified as counting by Ekantipur
+        # Fetch counting + declared constituencies (where Ekantipur has already found data)
         try:
-            counting_ids = set(
-                c.id for c in Constituency.query.filter_by(status="counting").all()
+            active_ids = set(
+                c.id for c in Constituency.query.filter(
+                    Constituency.status.in_(["counting", "declared"])
+                ).all()
             )
         except Exception:
-            counting_ids = set()
+            active_ids = set()
 
-        if not counting_ids:
-            # No counting constituencies yet — skip entirely, let Ekantipur discover first
+        if not active_ids:
+            # No active constituencies yet — skip entirely, let Ekantipur discover first
             return [], []
 
-        batch = [(cid, name, url) for cid, name, url in all_urls if cid in counting_ids]
-        logger.info(f"[OnlineKhabar] Fetching {len(batch)} counting constituencies")
+        batch = [(cid, name, url) for cid, name, url in all_urls if cid in active_ids]
+        logger.info(f"[OnlineKhabar] Fetching {len(batch)} active constituencies")
 
         def fetch_one(item):
             cid, cname, url = item
             try:
-                resp = self.fetch(url, timeout=12)
+                resp = self.fetch(url, timeout=10)
                 page_results = self._parse_page(resp.text, cname)
                 return page_results, None
             except requests.exceptions.HTTPError as e:
@@ -518,11 +490,11 @@ class OnlineKhabarScraper(BaseScraper):
             except Exception as e:
                 return [], f"{cname}: {str(e)[:60]}"
 
-        with ThreadPoolExecutor(max_workers=8) as executor:
+        with ThreadPoolExecutor(max_workers=15) as executor:
             futures = {executor.submit(fetch_one, item): item for item in batch}
-            for future in as_completed(futures, timeout=120):
+            for future in as_completed(futures, timeout=60):
                 try:
-                    page_results, error = future.result(timeout=30)
+                    page_results, error = future.result(timeout=15)
                     results.extend(page_results)
                     if error:
                         errors.append(error)
@@ -611,7 +583,7 @@ class ECNScraper(BaseScraper):
     """
     name = "ecn"
     display_name = "Election Commission Nepal"
-    enabled = True
+    enabled = False  # Disabled: returns party-level only, no candidate data
     timeout = 30
 
     URL = "https://result.election.gov.np"
@@ -679,33 +651,50 @@ class ScraperCoordinator:
         all_errors = []
         self.total_runs += 1
 
-        logger.info(f"[Run #{self.total_runs}] Starting scrape from {len(self.scrapers)} sources...")
+        logger.info(f"[Run #{self.total_runs}] Starting scrape from {len(self.scrapers)} sources in parallel...")
 
-        for scraper in self.scrapers:
+        # Run all scrapers in parallel for maximum speed
+        # Each thread needs Flask app context for DB queries
+        from flask import current_app
+        app = current_app._get_current_object()
+
+        def run_scraper_safe(scraper):
             try:
-                scraper_results, scraper_errors = scraper.run()
-                all_results.extend(scraper_results)
-                all_errors.extend(scraper_errors)
-
-                self.source_status[scraper.name] = {
-                    "display_name": scraper.display_name,
-                    "results_count": len(scraper_results),
-                    "errors": scraper_errors[:3],
-                    "status": "ok" if scraper_results else ("error" if scraper_errors else "no_data"),
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                }
+                with app.app_context():
+                    return scraper, scraper.run(), None
             except Exception as e:
-                error_msg = f"{scraper.display_name}: {str(e)[:100]}"
-                all_errors.append(error_msg)
-                logger.error(f"[Coordinator] {error_msg}")
-                logger.error(traceback.format_exc())
-                self.source_status[scraper.name] = {
-                    "display_name": scraper.display_name,
-                    "results_count": 0,
-                    "errors": [error_msg],
-                    "status": "error",
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                }
+                return scraper, ([], []), e
+
+        with ThreadPoolExecutor(max_workers=len(self.scrapers)) as executor:
+            futures = {executor.submit(run_scraper_safe, s): s for s in self.scrapers}
+            for future in as_completed(futures, timeout=90):
+                try:
+                    scraper, (scraper_results, scraper_errors), exc = future.result(timeout=60)
+                    if exc:
+                        raise exc
+                    all_results.extend(scraper_results)
+                    all_errors.extend(scraper_errors)
+
+                    self.source_status[scraper.name] = {
+                        "display_name": scraper.display_name,
+                        "results_count": len(scraper_results),
+                        "errors": scraper_errors[:3],
+                        "status": "ok" if scraper_results else ("error" if scraper_errors else "no_data"),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    }
+                except Exception as e:
+                    scraper = futures[future]
+                    error_msg = f"{scraper.display_name}: {str(e)[:100]}"
+                    all_errors.append(error_msg)
+                    logger.error(f"[Coordinator] {error_msg}")
+                    logger.error(traceback.format_exc())
+                    self.source_status[scraper.name] = {
+                        "display_name": scraper.display_name,
+                        "results_count": 0,
+                        "errors": [error_msg],
+                        "status": "error",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    }
 
         elapsed = time.time() - start
 

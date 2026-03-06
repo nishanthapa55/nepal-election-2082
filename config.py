@@ -13,6 +13,6 @@ class Config:
     ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "election2026")
 
     # Scraper settings — aggressive for election day live counting
-    SCRAPE_INTERVAL_SECONDS = 30   # scrape every 30 seconds
+    SCRAPE_INTERVAL_SECONDS = 15   # scrape every 15 seconds for faster updates
     SCRAPE_ENABLED = True          # auto-start scraper on launch
     EC_BASE_URL = "https://election.gov.np"

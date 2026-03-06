@@ -1,6 +1,6 @@
 /* ═══════════════════════ Nepal Election Live — Main JS ═══════════════════════ */
 
-const REFRESH_INTERVAL = 10000;
+const REFRESH_INTERVAL = 5000;
 const TOTAL_SEATS = 165;
 const MAJORITY = 83;
 
