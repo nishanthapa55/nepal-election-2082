@@ -192,7 +192,7 @@ function renderPartyTable() {
             ? `<img class="party-logo-img" src="${p.logo_url}" alt="${p.short_name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="party-logo" style="background:${p.color};display:none">${logoText.substring(0, 3)}</div>`
             : `<div class="party-logo" style="background:${p.color};">${logoText.substring(0, 3)}</div>`;
 
-        return `<tr onclick="showPartyConstituencies(${p.id})">
+        return `<tr onclick="showPartyModal(${p.id})">
             <td class="td-party">
                 <div class="party-cell">
                     ${logoHtml}
@@ -519,17 +519,77 @@ function closeModal() {
     document.getElementById("modalOverlay").classList.remove("active");
 }
 
-// ═══════════════════════ PARTY CLICK → CONSTITUENCY TAB ═══════════════════════
-function showPartyConstituencies(partyId) {
-    document.querySelectorAll(".tab-btn").forEach(b => {
-        b.classList.remove("active");
-        if (b.dataset.tab === "constituency") b.classList.add("active");
-    });
-    ["party", "constituency", "candidates", "hot-seat"].forEach(t => {
-        const el = document.getElementById(`tab-${t}`);
-        if (el) el.style.display = t === "constituency" ? "block" : "none";
-    });
-    loadConstituenciesData();
+// ═══════════════════════ PARTY CLICK → PARTY DETAIL MODAL ═══════════════════════
+async function showPartyModal(partyId) {
+    const overlay = document.getElementById("modalOverlay");
+    const body = document.getElementById("modalBody");
+
+    overlay.classList.add("active");
+    body.innerHTML = `<div class="loading-spinner"><div class="spinner"></div></div>`;
+    document.getElementById("modalTitle").textContent = "Loading...";
+    document.getElementById("modalSub").innerHTML = "";
+
+    try {
+        const res = await fetch(`/api/party/${partyId}/results`);
+        const data = await res.json();
+        const party = data.party;
+        const results = data.results || [];
+
+        // Count leading/won
+        const won = results.filter(r => r.is_winner).length;
+        const totalVotes = data.total_votes || 0;
+
+        document.getElementById("modalTitle").textContent = party.name_np || party.name;
+        document.getElementById("modalSub").innerHTML = `
+            <span style="font-weight:600;color:${party.color || '#666'}">${party.short_name}</span>
+            &nbsp;•&nbsp; ${results.length} Constituencies
+            &nbsp;•&nbsp; ${formatNumber(totalVotes)} Votes
+            ${won > 0 ? `&nbsp;•&nbsp; <span style="color:var(--green);font-weight:700">${won} Won</span>` : ''}
+        `;
+
+        if (results.length === 0) {
+            body.innerHTML = `<div class="no-results-msg" style="margin:0;">
+                <div class="icon">📭</div>
+                <div>No results available for this party yet</div>
+            </div>`;
+            return;
+        }
+
+        // Sort: winners first, then by votes desc
+        results.sort((a, b) => {
+            if (a.is_winner !== b.is_winner) return b.is_winner ? 1 : -1;
+            return b.votes - a.votes;
+        });
+
+        const maxVotes = Math.max(...results.map(r => r.votes));
+
+        body.innerHTML = `<div class="party-modal-list">${results.map((r, i) => {
+            const barWidth = maxVotes > 0 ? ((r.votes / maxVotes) * 100) : 0;
+            const cName = r.constituency_name || `Constituency`;
+            return `<div class="modal-result-row party-modal-row" onclick="closeModal();showConstituencyModal(${r.constituency_id})" style="cursor:pointer">
+                <div class="modal-rank ${i === 0 ? 'first' : ''}">${i + 1}</div>
+                <div class="modal-candidate-info">
+                    <div class="modal-candidate-name">
+                        ${r.candidate_name}
+                        ${r.is_winner ? '<span class="winner-badge">✓ WINNER</span>' : ''}
+                    </div>
+                    <div class="modal-candidate-party">
+                        <span class="c-party-dot" style="background:${party.color || '#666'}"></span>
+                        ${cName}
+                    </div>
+                    <div class="modal-vote-bar">
+                        <div class="modal-vote-bar-fill" style="width:${barWidth}%;background:${party.color || '#666'}"></div>
+                    </div>
+                </div>
+                <div class="modal-votes">
+                    <div class="vote-num">${formatNumber(r.votes)}</div>
+                </div>
+            </div>`;
+        }).join("")}</div>`;
+    } catch (err) {
+        console.error("Failed to load party detail:", err);
+        body.innerHTML = `<div class="no-results-msg"><div>Failed to load party details</div></div>`;
+    }
 }
 
 // ═══════════════════════ SCRAPER STATUS ═══════════════════════

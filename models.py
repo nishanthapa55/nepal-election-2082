@@ -128,6 +128,7 @@ class Result(db.Model):
         return {
             "id": self.id,
             "constituency_id": self.constituency_id,
+            "constituency_name": self.constituency.name if self.constituency else None,
             "candidate_id": self.candidate_id,
             "candidate_name": self.candidate.name if self.candidate else None,
             "party_id": self.party_id,
