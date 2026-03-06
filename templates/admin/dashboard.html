@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Nepal Election Live</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="admin-header">
+        <div class="container">
+            <h1>⚙️ Admin Dashboard</h1>
+            <div style="display:flex;gap:12px;align-items:center;">
+                <a href="/" class="btn btn-small" style="background:var(--bg);color:var(--text);border:1px solid var(--border);">View Site</a>
+                <a href="/admin/results" class="btn btn-small btn-primary">Manage Results</a>
+                <a href="/admin/logout" class="btn btn-small btn-danger">Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container" style="padding:24px 20px;">
+        <div class="summary-cards" style="margin-bottom:24px;">
+            <div class="card total">
+                <div class="card-number" id="totalC">-</div>
+                <div class="card-label">Constituencies</div>
+            </div>
+            <div class="card declared">
+                <div class="card-number" id="declaredC">-</div>
+                <div class="card-label">Declared</div>
+            </div>
+            <div class="card counting">
+                <div class="card-number" id="countingC">-</div>
+                <div class="card-label">Counting</div>
+            </div>
+            <div class="card pending">
+                <div class="card-number" id="pendingC">-</div>
+                <div class="card-label">Pending</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Quick Actions</h2>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;">
+                <a href="/admin/results" class="btn btn-primary">📝 Enter/Update Results</a>
+                <button class="btn" style="background:var(--bg);color:var(--text);border:1px solid var(--border);" onclick="triggerScrape()">
+                    🔄 Run Scraper Now
+                </button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Recent Scraper Logs</h2>
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Source</th>
+                        <th>Status</th>
+                        <th>Records</th>
+                        <th>Message</th>
+                    </tr>
+                </thead>
+                <tbody id="scraperLogs">
+                    <tr><td colspan="5" style="text-align:center;color:var(--text-dim);">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Load summary
+        fetch("/api/summary").then(r => r.json()).then(data => {
+            document.getElementById("totalC").textContent = data.total_constituencies;
+            document.getElementById("declaredC").textContent = data.declared;
+            document.getElementById("countingC").textContent = data.counting;
+            document.getElementById("pendingC").textContent = data.pending;
+        });
+
+        // Load scraper logs
+        fetch("/admin/api/scraper-logs").then(r => r.json()).then(logs => {
+            const tbody = document.getElementById("scraperLogs");
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);">No scraper logs yet</td></tr>';
+                return;
+            }
+            tbody.innerHTML = logs.map(l => `
+                <tr>
+                    <td>${l.timestamp ? new Date(l.timestamp).toLocaleString() : "-"}</td>
+                    <td>${l.source || "-"}</td>
+                    <td><span class="status-badge ${l.status === 'success' ? 'declared' : l.status === 'error' ? 'pending' : 'counting'}">${l.status}</span></td>
+                    <td>${l.records_updated || 0}</td>
+                    <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;">${l.message || "-"}</td>
+                </tr>
+            `).join("");
+        });
+
+        function triggerScrape() {
+            alert("Scraper triggered! Check logs in a moment.");
+            // In production, you'd have a POST endpoint to trigger scraping
+        }
+    </script>
+</body>
+</html>

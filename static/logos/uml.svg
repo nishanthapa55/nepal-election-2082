@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- CPN-UML - Sun (सूर्य) -->
+  <circle cx="50" cy="50" r="48" fill="#FF0000" stroke="#CC0000" stroke-width="2"/>
+  <!-- Sun rays -->
+  <g fill="#FFD700" transform="translate(50,50)">
+    <polygon points="0,-32 4,-14 -4,-14" transform="rotate(0)"/>
+    <polygon points="0,-32 4,-14 -4,-14" transform="rotate(30)"/>
+    <polygon points="0,-32 4,-14 -4,-14" transform="rotate(60)"/>
+    <polygon points="0,-32 4,-14 -4,-14" transform="rotate(90)"/>
+    <polygon points="0,-32 4,-14 -4,-14" transform="rotate(120)"/>
+    <polygon points="0,-32 4,-14 -4,-14" transform="rotate(150)"/>
+    <polygon points="0,-32 4,-14 -4,-14" transform="rotate(180)"/>
+    <polygon points="0,-32 4,-14 -4,-14" transform="rotate(210)"/>
+    <polygon points="0,-32 4,-14 -4,-14" transform="rotate(240)"/>
+    <polygon points="0,-32 4,-14 -4,-14" transform="rotate(270)"/>
+    <polygon points="0,-32 4,-14 -4,-14" transform="rotate(300)"/>
+    <polygon points="0,-32 4,-14 -4,-14" transform="rotate(330)"/>
+  </g>
+  <!-- Sun center -->
+  <circle cx="50" cy="50" r="16" fill="#FFD700"/>
+  <circle cx="50" cy="50" r="12" fill="#FFA500"/>
+  <!-- Hammer and sickle in sun -->
+  <g transform="translate(50,50) scale(0.4)" fill="#FF0000">
+    <rect x="-2" y="-15" width="4" height="30" rx="1"/>
+    <rect x="-8" y="-15" width="16" height="5" rx="1"/>
+    <path d="M5,5 Q15,-8 8,-15 L12,-15 Q20,-5 8,8 Z"/>
+  </g>
+</svg>

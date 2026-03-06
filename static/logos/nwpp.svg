@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- Nepal Workers Peasants Party - Hammer with Paddy/Wheat (हसिया हथौडा) -->
+  <circle cx="50" cy="50" r="48" fill="#663300" stroke="#4A2500" stroke-width="2"/>
+  <!-- Wheat/Paddy stalks -->
+  <g transform="translate(30,25)" fill="#FFD700">
+    <ellipse cx="0" cy="0" rx="3" ry="6" transform="rotate(-30)"/>
+    <ellipse cx="3" cy="8" rx="3" ry="6" transform="rotate(-20)"/>
+    <ellipse cx="5" cy="16" rx="3" ry="6" transform="rotate(-10)"/>
+    <ellipse cx="6" cy="24" rx="3" ry="6"/>
+    <line x1="3" y1="0" x2="8" y2="35" stroke="#DAA520" stroke-width="2"/>
+  </g>
+  <g transform="translate(42,22)" fill="#FFD700">
+    <ellipse cx="0" cy="0" rx="3" ry="6" transform="rotate(-10)"/>
+    <ellipse cx="1" cy="8" rx="3" ry="6"/>
+    <ellipse cx="1" cy="16" rx="3" ry="6" transform="rotate(5)"/>
+    <ellipse cx="0" cy="24" rx="3" ry="6" transform="rotate(10)"/>
+    <line x1="0" y1="0" x2="2" y2="38" stroke="#DAA520" stroke-width="2"/>
+  </g>
+  <!-- Hammer -->
+  <g transform="translate(62,30) rotate(30)">
+    <rect x="-2" y="0" width="4" height="35" rx="1" fill="#C0C0C0"/>
+    <rect x="-8" y="-5" width="16" height="10" rx="2" fill="#A0A0A0" stroke="#808080" stroke-width="1"/>
+  </g>
+  <!-- Sickle -->
+  <path d="M25,60 C20,55 22,45 30,40 L32,43 C26,47 24,53 28,58 Z" fill="#C0C0C0" stroke="#808080" stroke-width="1"/>
+  <!-- Base earth -->
+  <path d="M20,78 Q50,72 80,78" fill="none" stroke="#8B4513" stroke-width="2" opacity="0.5"/>
+</svg>

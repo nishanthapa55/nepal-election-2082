@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ne">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>चुनावी नतिजा २०८२ — Nepal Election Live Results</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- ═══════ TOP HEADER BAR ═══════ -->
+    <header class="top-header">
+        <div class="container header-flex">
+            <div class="brand">
+                <span class="brand-flag">🇳🇵</span>
+                <span class="brand-name">Nepal Election Live</span>
+            </div>
+            <div class="header-tag">#Election Result with Nepal Election Live</div>
+            <div class="header-right">
+                <div class="source-badge" id="sourceBadge" title="Connected data sources">
+                    <span>📡</span> <span id="activeSourceCount">6</span> Sources
+                </div>
+                <a href="/admin" class="btn-admin">Admin Panel</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════ TITLE & TABS ═══════ -->
+    <section class="title-section">
+        <div class="container title-flex">
+            <div class="title-left">
+                <h1 class="main-title">चुनावी नतिजा २०८२</h1>
+                <span class="live-badge"><span class="live-dot"></span> LIVE</span>
+            </div>
+            <nav class="tab-nav">
+                <button class="tab-btn active" data-tab="party">पार्टी</button>
+                <button class="tab-btn" data-tab="constituency">निर्वाचन क्षेत्र</button>
+                <button class="tab-btn" data-tab="candidates">उम्मेदवार</button>
+                <button class="tab-btn" data-tab="hot-seat">हट सिट</button>
+            </nav>
+        </div>
+    </section>
+
+    <!-- ═══════ COMPACT STATS STRIP ═══════ -->
+    <div class="stats-strip">
+        <div class="container stats-flex">
+            <div class="stat-chip">
+                <span class="stat-num" id="statTotal">165</span>
+                <span class="stat-lbl">Constituencies</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-chip st-declared">
+                <span class="stat-num" id="statDeclared">0</span>
+                <span class="stat-lbl">Declared</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-chip st-counting">
+                <span class="stat-num" id="statCounting">0</span>
+                <span class="stat-lbl">Counting</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-chip st-pending">
+                <span class="stat-num" id="statPending">0</span>
+                <span class="stat-lbl">Pending</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-chip st-votes">
+                <span class="stat-num" id="statVotes">0</span>
+                <span class="stat-lbl">Total Votes</span>
+            </div>
+            <div class="stat-updated" id="lastUpdated">Updated just now</div>
+        </div>
+    </div>
+
+    <!-- ═══════ TAB: PARTY RESULTS (Main Dashboard) ═══════ -->
+    <main class="content-area" id="tab-party">
+        <div class="container two-col-layout">
+            <!-- LEFT COLUMN: Party Results Table -->
+            <div class="col-main">
+                <table class="party-table">
+                    <thead>
+                        <tr>
+                            <th class="col-party">Parties</th>
+                            <th class="col-num"><span class="th-icon">📈</span> Leading</th>
+                            <th class="col-num"><span class="th-icon">✅</span> Win</th>
+                            <th class="col-total">Total Seat</th>
+                            <th class="col-votes">प्रत्यक्ष मत</th>
+                        </tr>
+                    </thead>
+                    <tbody id="partyTableBody">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- RIGHT COLUMN: Sidebar -->
+            <aside class="col-sidebar">
+                <!-- Parliament Seat Card -->
+                <div class="sidebar-card seat-card">
+                    <div class="seat-card-header">
+                        <div class="seat-card-title">प्रत्यक्ष सिट — प्रतिनिधि सभा</div>
+                        <div class="seat-card-subtitle">कुल सिट: <strong>१६५</strong></div>
+                    </div>
+                    <div class="hemicycle-wrap">
+                        <svg id="hemicycleSvg" viewBox="0 0 360 210" preserveAspectRatio="xMidYMid meet"></svg>
+                        <div class="hemicycle-center-label">
+                            <span class="hemi-number" id="hemiNumber">१६५</span>
+                            <span class="hemi-text">प्रत्यक्ष सिट</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Party Seat Bars -->
+                <div class="sidebar-card party-bars-card">
+                    <div id="partyBars">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- ═══════ TAB: CONSTITUENCY BROWSER ═══════ -->
+    <div id="tab-constituency" class="content-area" style="display:none;">
+        <div class="container">
+            <div class="browse-panel">
+                <div class="browse-header">
+                    <h2>🗺️ निर्वाचन क्षेत्र — Constituency Results</h2>
+                    <div class="search-bar">
+                        <input type="text" class="search-input" id="searchInput" placeholder="Search constituency or district...">
+                    </div>
+                </div>
+
+                <!-- Province Tabs -->
+                <div class="province-tabs" id="provinceTabs">
+                    <button class="province-tab active" data-province="">All</button>
+                </div>
+
+                <!-- District Chips -->
+                <div class="district-bar" id="districtBar"></div>
+
+                <!-- Status filter -->
+                <div class="status-pills">
+                    <button class="status-pill active" data-status="">All</button>
+                    <button class="status-pill" data-status="declared">✅ Declared</button>
+                    <button class="status-pill" data-status="counting">📊 Counting</button>
+                    <button class="status-pill" data-status="pending">⏳ Pending</button>
+                </div>
+
+                <!-- Constituency Cards -->
+                <div class="constituency-list" id="constituencyList">
+                    <div class="loading-spinner"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ TAB: CANDIDATES (placeholder) ═══════ -->
+    <div id="tab-candidates" class="content-area" style="display:none;">
+        <div class="container">
+            <div class="browse-panel placeholder-panel">
+                <div class="placeholder-icon">👥</div>
+                <h3>उम्मेदवार सूची</h3>
+                <p>Candidate details will appear here as counting progresses</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ TAB: HOT SEATS (placeholder) ═══════ -->
+    <div id="tab-hot-seat" class="content-area" style="display:none;">
+        <div class="container">
+            <div class="browse-panel placeholder-panel">
+                <div class="placeholder-icon">🔥</div>
+                <h3>हट सिट</h3>
+                <p>Closely contested seats will appear here</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ CONSTITUENCY DETAIL MODAL ═══════ -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-header-left">
+                    <h2 id="modalTitle">Constituency Details</h2>
+                    <div class="modal-sub" id="modalSub"></div>
+                </div>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div class="loading-spinner"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ DATA SOURCE STATUS BAR ═══════ -->
+    <div class="scraper-bar">
+        <div class="container scraper-flex">
+            <span class="scraper-label">📡 Data Sources:</span>
+            <div class="source-indicators" id="sourceIndicators">
+                <span class="src-ind" data-source="onlinekhabar">OnlineKhabar</span>
+                <span class="src-ind" data-source="setopati">Setopati</span>
+                <span class="src-ind" data-source="ekantipur">Ekantipur</span>
+                <span class="src-ind" data-source="ratopati">Ratopati</span>
+                <span class="src-ind" data-source="ec_nepal">EC Nepal</span>
+                <span class="src-ind" data-source="hamropatro">Hamro Patro</span>
+            </div>
+            <span class="scraper-info" id="scraperInfo">Auto-refresh: 10s</span>
+        </div>
+    </div>
+
+    <!-- ═══════ FOOTER ═══════ -->
+    <footer>
+        <div class="container">
+            <p>Nepal Election Live Results 2026 (2082 B.S.) — प्रतिनिधि सभा निर्वाचन</p>
+            <div class="footer-sub">Data aggregated from: OnlineKhabar, Setopati, Ekantipur, Ratopati, EC Nepal, Hamro Patro</div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

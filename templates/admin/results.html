@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Results - Nepal Election Live</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="admin-header">
+        <div class="container">
+            <h1>📝 Manage Results</h1>
+            <div style="display:flex;gap:12px;align-items:center;">
+                <a href="/admin" class="btn btn-small" style="background:var(--bg);color:var(--text);border:1px solid var(--border);">← Dashboard</a>
+                <a href="/" class="btn btn-small" style="background:var(--bg);color:var(--text);border:1px solid var(--border);">View Site</a>
+                <a href="/admin/logout" class="btn btn-small btn-danger">Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container" style="padding:24px 20px;">
+        <div class="admin-grid">
+            <!-- Sidebar: Constituency List -->
+            <div class="admin-sidebar">
+                <h3>Select Constituency</h3>
+                <input type="text" id="cSearch" placeholder="Search..." 
+                    style="width:100%;padding:8px;margin-bottom:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:inherit;">
+                <ul class="admin-constituency-list" id="cList">
+                    {% for c in constituencies %}
+                    <li data-id="{{ c.id }}" data-name="{{ c.name }}" onclick="selectConstituency({{ c.id }}, '{{ c.name }}', '{{ c.status }}')">
+                        <span>{{ c.name }}</span>
+                        <span class="status-badge {{ c.status }}" style="float:right;font-size:0.6rem;">{{ c.status }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Main: Result Entry Form -->
+            <div>
+                <div class="panel" id="noSelection">
+                    <p style="text-align:center;color:var(--text-dim);padding:40px;">
+                        ← Select a constituency from the list to enter/update results
+                    </p>
+                </div>
+
+                <div class="panel" id="resultForm" style="display:none;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <div>
+                            <h2 id="selectedName" style="margin-bottom:4px;"></h2>
+                            <div id="selectedStatus"></div>
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <select id="statusSelect" onchange="updateStatus()" 
+                                style="padding:6px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:inherit;">
+                                <option value="pending">Pending</option>
+                                <option value="counting">Counting</option>
+                                <option value="declared">Declared</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Existing Results -->
+                    <div id="existingResults" style="margin-bottom:20px;"></div>
+
+                    <!-- Add New Results -->
+                    <h3 style="font-size:0.9rem;color:var(--text-dim);margin-bottom:12px;">Add/Update Results</h3>
+                    <div id="resultEntries">
+                        <!-- Dynamic entries -->
+                    </div>
+                    <button class="btn" style="background:var(--bg);color:var(--text);border:1px solid var(--border);margin-top:8px;" onclick="addEntry()">
+                        + Add Candidate
+                    </button>
+
+                    <div style="margin-top:20px;display:flex;gap:12px;">
+                        <button class="btn btn-primary" onclick="saveResults()">💾 Save All Results</button>
+                    </div>
+                    <div id="saveMessage" style="margin-top:12px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const parties = {{ parties | tojson }};
+        let selectedConstituencyId = null;
+
+        // Search filter
+        document.getElementById("cSearch").addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase();
+            document.querySelectorAll("#cList li").forEach(li => {
+                li.style.display = li.dataset.name.toLowerCase().includes(query) ? "" : "none";
+            });
+        });
+
+        function selectConstituency(id, name, status) {
+            selectedConstituencyId = id;
+            
+            // Highlight in list
+            document.querySelectorAll("#cList li").forEach(li => li.classList.remove("active"));
+            document.querySelector(`#cList li[data-id="${id}"]`).classList.add("active");
+
+            // Show form
+            document.getElementById("noSelection").style.display = "none";
+            document.getElementById("resultForm").style.display = "block";
+            document.getElementById("selectedName").textContent = name;
+            document.getElementById("statusSelect").value = status;
+
+            // Load existing results
+            loadExistingResults(id);
+
+            // Reset entries
+            document.getElementById("resultEntries").innerHTML = "";
+            addEntry();
+        }
+
+        async function loadExistingResults(id) {
+            const res = await fetch(`/api/constituency/${id}`);
+            const data = await res.json();
+            const container = document.getElementById("existingResults");
+
+            if (data.results.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-dim);font-size:0.85rem;">No results entered yet.</p>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="results-table">
+                    <thead>
+                        <tr><th>#</th><th>Candidate</th><th>Party</th><th>Votes</th></tr>
+                    </thead>
+                    <tbody>
+                        ${data.results.map((r, i) => `
+                            <tr>
+                                <td>${i + 1}</td>
+                                <td>${r.candidate_name} ${r.is_winner ? "✅" : ""}</td>
+                                <td><span class="party-badge"><span class="party-dot" style="background:${r.party_color}"></span>${r.party_short}</span></td>
+                                <td><strong>${Number(r.votes).toLocaleString()}</strong></td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function addEntry() {
+            const container = document.getElementById("resultEntries");
+            const idx = container.children.length;
+            const div = document.createElement("div");
+            div.className = "result-entry";
+            div.innerHTML = `
+                <input type="text" placeholder="Candidate Name" class="entry-name">
+                <select class="entry-party">
+                    <option value="">No Party</option>
+                    ${parties.map(p => `<option value="${p.id}">${p.short_name} - ${p.name}</option>`).join("")}
+                </select>
+                <input type="number" placeholder="Votes" class="entry-votes" min="0" value="0">
+                <button class="remove-btn" onclick="this.parentElement.remove()">×</button>
+            `;
+            container.appendChild(div);
+        }
+
+        async function saveResults() {
+            if (!selectedConstituencyId) return;
+
+            const entries = document.querySelectorAll("#resultEntries .result-entry");
+            const results = [];
+
+            entries.forEach(entry => {
+                const name = entry.querySelector(".entry-name").value.trim();
+                const partyId = entry.querySelector(".entry-party").value;
+                const votes = parseInt(entry.querySelector(".entry-votes").value) || 0;
+
+                if (name) {
+                    results.push({
+                        candidate_name: name,
+                        party_id: partyId ? parseInt(partyId) : null,
+                        votes: votes,
+                    });
+                }
+            });
+
+            if (results.length === 0) {
+                showMessage("Please add at least one candidate.", "error");
+                return;
+            }
+
+            try {
+                const res = await fetch("/admin/api/bulk-update", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        constituency_id: selectedConstituencyId,
+                        results: results,
+                    }),
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    showMessage(`✅ Saved ${data.updated} results successfully!`, "success");
+                    loadExistingResults(selectedConstituencyId);
+                    // Clear entries
+                    document.getElementById("resultEntries").innerHTML = "";
+                    addEntry();
+                } else {
+                    showMessage(`❌ Error: ${data.error}`, "error");
+                }
+            } catch (err) {
+                showMessage(`❌ Failed to save: ${err.message}`, "error");
+            }
+        }
+
+        async function updateStatus() {
+            if (!selectedConstituencyId) return;
+            const status = document.getElementById("statusSelect").value;
+
+            try {
+                const res = await fetch("/admin/api/update-constituency-status", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        constituency_id: selectedConstituencyId,
+                        status: status,
+                    }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showMessage(`Status updated to "${status}"`, "success");
+                    // Update sidebar badge
+                    const li = document.querySelector(`#cList li[data-id="${selectedConstituencyId}"]`);
+                    if (li) {
+                        const badge = li.querySelector(".status-badge");
+                        badge.textContent = status;
+                        badge.className = `status-badge ${status}`;
+                    }
+                }
+            } catch (err) {
+                showMessage(`Failed to update status`, "error");
+            }
+        }
+
+        function showMessage(text, type) {
+            const el = document.getElementById("saveMessage");
+            el.innerHTML = `<div class="flash-message ${type}">${text}</div>`;
+            setTimeout(() => el.innerHTML = "", 5000);
+        }
+    </script>
+</body>
+</html>
