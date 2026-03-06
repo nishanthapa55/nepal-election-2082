@@ -127,7 +127,35 @@ async function loadAllParties() {
 
 // ═══════════════════════ COMPUTE PARTY STATS ═══════════════════════
 function getPartyStats() {
-    // Compute leading & won per party from leadingData
+    // If OnlineKhabar API data is available, use it (most up-to-date, refreshed every 5s)
+    const okh = summaryData && summaryData.okh_party_summary;
+    if (okh && okh.parties && okh.parties.length > 0) {
+        const okhMap = {};
+        okh.parties.forEach(p => {
+            if (p.party_short) okhMap[p.party_short] = p;
+        });
+
+        // Merge with party info from allParties
+        const merged = allParties.map(p => {
+            const o = okhMap[p.short_name] || {};
+            return {
+                id: p.id,
+                name: p.name,
+                name_np: p.name_np || p.name,
+                short_name: p.short_name,
+                short_name_np: p.short_name_np || p.short_name,
+                color: p.color,
+                leading: o.leading || 0,
+                won: o.won || 0,
+                total_seats: o.total || 0,
+                total_votes: o.samanupatik || 0,
+            };
+        });
+        merged.sort((a, b) => b.total_seats - a.total_seats || b.total_votes - a.total_votes || a.name.localeCompare(b.name));
+        return merged;
+    }
+
+    // Fallback: compute from DB data (leadingData)
     const leadStats = {};
     leadingData.forEach(l => {
         const party = l.leading_party || "IND";

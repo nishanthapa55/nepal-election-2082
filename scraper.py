@@ -2,13 +2,14 @@
 Nepal Election Results Scraper (2082)
 =====================================
 Scrapes live election results from real sources:
-  1. Ekantipur Election Portal (election.ekantipur.com) - candidate-level data
-  2. Election Commission Nepal (result.election.gov.np) - official party summary
+  1. OnlineKhabar API (fast party summary) - single JSON request
+  2. Ekantipur Election Portal (election.ekantipur.com) - candidate-level data
+  3. OnlineKhabar HTML (update-only) - supplementary candidate data
 
 Architecture:
-  - EkantipurScraper: fetches constituency pages in rotating batches,
-    parses __NEXT_DATA__ JSON or falls back to HTML text parsing
-  - ECNScraper: fetches official ASP.NET results page
+  - OnlineKhabarAPIScraper: single JSON request for party summary (runs every 5s)
+  - EkantipurScraper: fetches constituency pages, skips declared ones
+  - OnlineKhabarScraper: update-only mode for candidate data
   - ScraperCoordinator: runs scrapers, reconciles data, updates database
 """
 
@@ -351,25 +352,37 @@ class EkantipurScraper(BaseScraper):
         if not all_urls:
             return [], ["No constituency URLs generated"]
 
-        # Fetch ALL constituencies every cycle for maximum coverage and speed
-        batch = all_urls[:]
-        logger.info(f"[Ekantipur] Fetching all {len(batch)} constituencies")
+        # Skip declared constituencies (results won't change) for speed
+        try:
+            declared_ids = set(
+                c.id for c in Constituency.query.filter_by(status="declared").all()
+            )
+        except Exception:
+            declared_ids = set()
 
-        # Fetch pages with thread pool — 20 workers for fast parallel fetching
+        if declared_ids:
+            batch = [(cid, cname, url) for cid, cname, url in all_urls if cid not in declared_ids]
+            logger.info(f"[Ekantipur] Fetching {len(batch)} constituencies "
+                        f"(skipping {len(declared_ids)} declared)")
+        else:
+            batch = all_urls[:]
+            logger.info(f"[Ekantipur] Fetching all {len(batch)} constituencies")
+
+        # Fetch pages with thread pool — 30 workers for maximum parallel speed
         def fetch_one(item):
             cid, cname, url = item
             try:
-                resp = self.fetch(url, timeout=12)
+                resp = self.fetch(url, timeout=10)
                 page_results = self._parse_constituency_page(resp.text, cname)
                 return page_results, None
             except Exception as e:
                 return [], f"{cname}: {str(e)[:80]}"
 
-        with ThreadPoolExecutor(max_workers=20) as executor:
+        with ThreadPoolExecutor(max_workers=30) as executor:
             futures = {executor.submit(fetch_one, item): item for item in batch}
-            for future in as_completed(futures, timeout=120):
+            for future in as_completed(futures, timeout=90):
                 try:
-                    page_results, error = future.result(timeout=15)
+                    page_results, error = future.result(timeout=12)
                     results.extend(page_results)
                     if error:
                         errors.append(error)
@@ -481,6 +494,119 @@ class EkantipurScraper(BaseScraper):
                         f"leading: {next((r['candidate'] for r in results if r.get('is_leading')), 'N/A')}")
         
         return results
+
+
+# ──────────── OnlineKhabar API (Fast Party Summary) ────────────
+
+# Global cache for the fast OnlineKhabar API party summary
+_okh_party_cache = {
+    "data": None,
+    "timestamp": None,
+}
+
+
+# Mapping from OnlineKhabar Nepali party_nickname to our DB short_name
+OKH_API_PARTY_MAP = {
+    "रास्वपा": "RSP",
+    "कांग्रेस": "NC",
+    "एमाले": "UML",
+    "नेकपा": "MC",        # Nepali Communist Party (Maoist)
+    "श्रम संस्कृति": "SSP",
+    "जसपा": "JSP",
+    "स्वतन्त्र": "IND",
+    "जनमत": "JP",
+    "राप्रपा": "RPP",
+    "एकीकृत समाजवादी": "US",
+    "नाउपा": "NUP",
+    "उजनेपा": "UNP",
+    "लोसपा": "LSP",
+    "नेमकिपा": "NWPP",
+    "प्रलोपा": "PLP",
+    "नेसपा": "NSP",
+    "राजमो": "RJM",
+    # Additional OnlineKhabar-specific names
+    "माओवादी केन्द्र": "MC",
+    "माओवादी": "MC",
+}
+
+
+class OnlineKhabarAPIScraper(BaseScraper):
+    """
+    Fetches party-level election summary from OnlineKhabar's JSON API.
+    Single HTTP request returns all party data (leading, won, proportional votes).
+    This is the fastest data source — runs every 5 seconds.
+    """
+    name = "onlinekhabar_api"
+    display_name = "OnlineKhabar API"
+    enabled = True
+    timeout = 10
+
+    API_URL = "https://election.onlinekhabar.com/wp-json/okelapi/v1/2082/home/election-results?limit=200"
+
+    def run(self):
+        """Fetch party summary and store in global cache."""
+        global _okh_party_cache
+        errors = []
+        try:
+            resp = self.session.get(self.API_URL, timeout=self.timeout)
+            resp.raise_for_status()
+            data = resp.json()
+
+            if data.get("status") != 200 or "data" not in data:
+                errors.append("OnlineKhabar API: unexpected response format")
+                return [], errors
+
+            party_results = data["data"].get("party_results", [])
+            if not party_results:
+                return [], ["OnlineKhabar API: no party results"]
+
+            # Map to our party structure
+            mapped = []
+            for p in party_results:
+                nickname = p.get("party_nickname", "").strip()
+                our_short = OKH_API_PARTY_MAP.get(nickname)
+                if not our_short:
+                    # Try slug-based matching
+                    slug = p.get("party_slug", "")
+                    if "swatantra" in slug: our_short = "RSP"
+                    elif "congress" in slug: our_short = "NC"
+                    elif "uml" in slug: our_short = "UML"
+                    elif "communist" in slug: our_short = "MC"
+
+                mapped.append({
+                    "party_short": our_short,
+                    "party_nickname": nickname,
+                    "leading": p.get("leading_count", 0),
+                    "won": p.get("winner_count", 0),
+                    "total": p.get("total_seat", 0),
+                    "samanupatik": p.get("samanupatik", 0),
+                    "color": p.get("party_color", ""),
+                })
+
+            _okh_party_cache["data"] = mapped
+            _okh_party_cache["timestamp"] = datetime.now(timezone.utc).isoformat()
+
+            total_leading = sum(p["leading"] for p in mapped)
+            total_won = sum(p["won"] for p in mapped)
+            logger.info(f"[OnlineKhabar API] {len(mapped)} parties, "
+                        f"{total_won} declared, {total_leading} leading")
+
+            return [], errors  # No per-candidate results, just party cache
+
+        except Exception as e:
+            errors.append(f"OnlineKhabar API: {str(e)[:100]}")
+            logger.error(f"[OnlineKhabar API] {errors[-1]}")
+            return [], errors
+
+
+def get_okh_party_cache():
+    """Return the cached OnlineKhabar party summary (or None if not yet fetched)."""
+    return _okh_party_cache.get("data")
+
+
+def get_okh_cache_timestamp():
+    """Return the timestamp of the last OnlineKhabar API fetch."""
+    return _okh_party_cache.get("timestamp")
 
 
 # ──────────────────────── OnlineKhabar Scraper ────────────────────────
@@ -699,6 +825,7 @@ class ECNScraper(BaseScraper):
 # ──────────────────── Scraper Registry ────────────────────
 
 ALL_SCRAPERS = [EkantipurScraper, OnlineKhabarScraper, ECNScraper]
+FAST_SCRAPERS = [OnlineKhabarAPIScraper]  # Runs every 5s for instant party data
 
 
 # ──────────────────────── Coordinator ────────────────────────
@@ -999,7 +1126,7 @@ def get_coordinator(app=None):
 
 
 def run_scraper():
-    """Main entry point called by the scheduler."""
+    """Main entry point called by the scheduler (full scrape cycle)."""
     c = get_coordinator()
     try:
         return c.run_all()
@@ -1007,3 +1134,13 @@ def run_scraper():
         logger.error(f"Scraper coordinator failed: {e}")
         logger.error(traceback.format_exc())
         return 0
+
+
+def run_fast_scraper():
+    """Fast entry point — fetches OnlineKhabar API for party summary only."""
+    try:
+        scraper = OnlineKhabarAPIScraper()
+        scraper.run()
+    except Exception as e:
+        logger.error(f"Fast scraper failed: {e}")
+        logger.error(traceback.format_exc())

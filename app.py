@@ -114,7 +114,7 @@ def constituency_detail(constituency_id):
 @app.route("/api/summary")
 @cached("summary")
 def api_summary():
-    """Overall election summary stats."""
+    """Overall election summary stats, enhanced with OnlineKhabar API data."""
     total_constituencies = Constituency.query.count()
     declared = Constituency.query.filter_by(status="declared").count()
     counting = Constituency.query.filter_by(status="counting").count()
@@ -158,6 +158,16 @@ def api_summary():
     # Leading candidates (most votes in each counting constituency)
     total_votes_cast = db.session.query(func.sum(Result.votes)).scalar() or 0
 
+    # Get fast OnlineKhabar API party data if available
+    from scraper import get_okh_party_cache, get_okh_cache_timestamp
+    okh_data = get_okh_party_cache()
+    okh_party_summary = None
+    if okh_data:
+        okh_party_summary = {
+            "parties": okh_data,
+            "timestamp": get_okh_cache_timestamp(),
+        }
+
     return {
         "total_constituencies": total_constituencies,
         "declared": declared,
@@ -172,6 +182,7 @@ def api_summary():
             {"id": p.id, "name": p.name, "short_name": p.short_name, "short_name_np": p.short_name_np, "name_np": p.name_np, "color": p.color, "total_votes": p.total_votes}
             for p in party_votes
         ],
+        "okh_party_summary": okh_party_summary,
         "last_updated": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -554,7 +565,7 @@ def admin_trigger_scrape():
 _scheduler = None
 
 def start_scheduler(app):
-    """Start background scraper on a schedule."""
+    """Start background scrapers on a schedule."""
     global _scheduler
     try:
         from apscheduler.schedulers.background import BackgroundScheduler
@@ -565,6 +576,12 @@ def start_scheduler(app):
                 from scraper import run_scraper
                 run_scraper()
 
+        def fast_scrape_job():
+            with app.app_context():
+                from scraper import run_fast_scraper
+                run_fast_scraper()
+
+        # Full scrape (Ekantipur + OnlineKhabar HTML) every 15s
         _scheduler.add_job(
             scrape_job,
             "interval",
@@ -573,9 +590,20 @@ def start_scheduler(app):
             max_instances=1,
             next_run_time=datetime.now(timezone.utc),  # run immediately on start
         )
+
+        # Fast scrape (OnlineKhabar API — party summary) every 5s
+        _scheduler.add_job(
+            fast_scrape_job,
+            "interval",
+            seconds=5,
+            id="fast_party_scraper",
+            max_instances=1,
+            next_run_time=datetime.now(timezone.utc),
+        )
+
         _scheduler.start()
-        logger.info(f"Multi-source scraper scheduled every {Config.SCRAPE_INTERVAL_SECONDS}s")
-        logger.info(f"Scraping from: Ekantipur, Election Commission Nepal")
+        logger.info(f"Full scraper scheduled every {Config.SCRAPE_INTERVAL_SECONDS}s")
+        logger.info(f"Fast party scraper scheduled every 5s (OnlineKhabar API)")
     except Exception as e:
         logger.warning(f"Scheduler not started: {e}")
 
@@ -606,8 +634,8 @@ if __name__ == "__main__":
     print("  Nepal Election Live Results 2026")
     print("  Dashboard:  http://127.0.0.1:5000")
     print("  Admin:      http://127.0.0.1:5000/admin")
-    print("  Scraper:    " + ("ACTIVE (every {}s)".format(Config.SCRAPE_INTERVAL_SECONDS) if Config.SCRAPE_ENABLED else "DISABLED"))
-    print("  Sources:    Ekantipur, OnlineKhabar, Election Commission Nepal")
+    print("  Scraper:    " + ("ACTIVE (full: {}s, fast: 5s)".format(Config.SCRAPE_INTERVAL_SECONDS) if Config.SCRAPE_ENABLED else "DISABLED"))
+    print("  Sources:    OnlineKhabar API, Ekantipur, OnlineKhabar HTML")
     print("=" * 60 + "\n")
 
     app.run(
