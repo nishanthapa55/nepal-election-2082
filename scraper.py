@@ -141,18 +141,22 @@ def resolve_party(name_str):
 # ──────────────── District Slug for Ekantipur URLs ─────────────────
 
 DISTRICT_SLUG_OVERRIDES = {
-    "Nawalparasi East": "nawalparasi(e)",
-    "Nawalparasi West": "nawalparasi(w)",
-    "Nawalparasi (East)": "nawalparasi(e)",
-    "Nawalparasi (West)": "nawalparasi(w)",
+    # Verified against Ekantipur's official district slug list
+    "Nawalparasi East": "nawalparasieast",
+    "Nawalparasi West": "nawalparasiwest",
+    "Nawalparasi (East)": "nawalparasieast",
+    "Nawalparasi (West)": "nawalparasiwest",
     "Eastern Rukum": "rukumeast",
-    "Western Rukum": "rukum(w)",
+    "Western Rukum": "rukumwest",
     "Rukum (East)": "rukumeast",
-    "Rukum (West)": "rukum(w)",
-    "Kavrepalanchok": "kavreplanchowk",
+    "Rukum (West)": "rukumwest",
+    "Kavrepalanchok": "kavrepalanchowk",
+    "Sindhupalchok": "sindhupalchowk",
     "Tanahu": "tanahun",
-    "Dadeldhura": "dadeldura",
     "Dolakha": "dolkha",
+    "Ilam": "illam",
+    "Dhanusha": "dhanusa",
+    "Rautahat": "rauthat",
 }
 
 
