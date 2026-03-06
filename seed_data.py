@@ -89,6 +89,10 @@ PARTIES = [
     {"name": "Nagarik Unmukti Party", "short_name": "NUP", "short_name_np": "नाउपा", "name_np": "नागरिक उन्मुक्ति पार्टी", "color": "#00CC99", "logo_url": "/static/logos/nup.svg"},
     {"name": "Nepal Workers Peasants Party", "short_name": "NWPP", "short_name_np": "नेमकिपा", "name_np": "नेपाल मजदुर किसान पार्टी", "color": "#663300", "logo_url": "/static/logos/nwpp.svg"},
     {"name": "Ujaylo Nepal Party", "short_name": "UNP", "short_name_np": "उजनेपा", "name_np": "उज्यालो नेपाल पार्टी", "color": "#FFA500", "logo_url": "/static/logos/unp.svg"},
+    {"name": "Shram Sanskriti Party", "short_name": "SSP", "short_name_np": "श्रमसंपा", "name_np": "श्रम संस्कृति पार्टी", "color": "#8B4513", "logo_url": "/static/logos/ssp.svg"},
+    {"name": "Pragatishil Loktantrik Party", "short_name": "PLP", "short_name_np": "प्रलोपा", "name_np": "प्रगतिशील लोकतान्त्रिक पार्टी", "color": "#4B0082", "logo_url": "/static/logos/plp.svg"},
+    {"name": "Nepal Sadbhavana Party", "short_name": "NSP", "short_name_np": "नेसपा", "name_np": "नेपाल सद्भावना पार्टी", "color": "#228B22", "logo_url": "/static/logos/nsp.svg"},
+    {"name": "Rastriya Janamorcha", "short_name": "RJM", "short_name_np": "राजमो", "name_np": "राष्ट्रिय जनमोर्चा", "color": "#B22222", "logo_url": "/static/logos/rjm.svg"},
     {"name": "Independent", "short_name": "IND", "short_name_np": "स्वतन्त्र", "name_np": "स्वतन्त्र", "color": "#999999", "logo_url": "/static/logos/ind.svg"},
 ]
 

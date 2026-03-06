@@ -89,6 +89,8 @@ PARTY_NAME_MAP = {
     # JSP
     "jsp": "JSP", "janata samajwadi": "JSP", "janata samajwadi party": "JSP",
     "janata samjbadi party-nepal": "JSP", "janata samajwadi party, nepal": "JSP",
+    "janata samajbadi party (ekal chunab chinha)": "JSP",
+    "janata samajbadi party": "JSP",
     "\u091c\u0928\u0924\u093e \u0938\u092e\u093e\u091c\u0935\u093e\u0926\u0940 \u092a\u093e\u0930\u094d\u091f\u0940": "JSP",
     "\u091c\u0938\u092a\u093e": "JSP",
     # Janamat
@@ -96,6 +98,8 @@ PARTY_NAME_MAP = {
     "\u091c\u0928\u092e\u0924 \u092a\u093e\u0930\u094d\u091f\u0940": "JP",
     # Nagarik Unmukti
     "nup": "NUP", "nagarik unmukti": "NUP", "nagarik unmukti party": "NUP",
+    "nagarik unmukti party, nepal": "NUP",
+    "nagarik unmukti party, nepal (ekal chunab chinha)": "NUP",
     "\u0928\u093e\u0917\u0930\u093f\u0915 \u0909\u0928\u094d\u092e\u0941\u0915\u094d\u0924\u093f \u092a\u093e\u0930\u094d\u091f\u0940": "NUP",
     # NWPP
     "nwpp": "NWPP", "nepal workers peasants party": "NWPP",
@@ -124,6 +128,55 @@ PARTY_NAME_MAP = {
     # Rastriya Mukti Party
     "rastriya mukti party nepal": "RMPN",
     "rastriya mukti party nepal (ekal chunab chinha)": "RMPN",
+    # Pragatishil Loktantrik Party
+    "pragatishil loktantrik party": "PLP",
+    "प्रगतिशील लोकतान्त्रिक पार्टी": "PLP",
+    # Nepal Sadbhavana Party
+    "nepal sadbhavana party": "NSP",
+    "नेपाल सद्भावना पार्टी": "NSP",
+    # Rastriya Janamorcha
+    "rastriya janamorcha": "RJM",
+    "राष्ट्रिय जनमोर्चा": "RJM",
+    # Nepal Communist Party (Sainyukta/United)
+    "nepal communist party (sainyukta)": "US",
+    # Nepal Communist Party (Marxist) variants
+    "nepal communist party (marxist) (ekal chunab chinha)": "MC",
+    "nepal communist party marxist (pushpalal)": "MC",
+    # Nepal Majdoor Kisan Party (alternate spelling)
+    "nepal majdoor kisan party": "NWPP",
+    # Nepali Janata Dal
+    "nepali janata dal": "IND",
+    # Nepalka Lagi Nepali Party
+    "nepalka lagi nepali party": "IND",
+    # Other small parties -> IND for grouping
+    "mongol national organization": "IND",
+    "people first party": "IND",
+    "swabhiman party": "IND",
+    "nepal janata party": "IND",
+    "miteri party nepal": "IND",
+    "jana adhikar party": "IND",
+    "jaya matribhumi party": "IND",
+    "itihasik janata party": "IND",
+    "triumul nepal": "IND",
+    "aam janata party (ekal chunab chinha)": "IND",
+    "national republic nepal": "IND",
+    "rastriya pariwartan party": "IND",
+    "rastriya ekata dal": "IND",
+    "rastriya sajha party": "IND",
+    "rastra nirman dal nepal": "IND",
+    "sainyukta nagarik party": "IND",
+    "samabeshi samajbadi party": "IND",
+    "sanghiya loktantrik rastriya manch": "IND",
+    "sarbhobham nagarik party": "IND",
+    "nepal janamukti party": "IND",
+    "nepal janasewa party": "IND",
+    "nepal janata samrakchhyan party": "IND",
+    "nepal manabta party": "IND",
+    "nepali janashramdan sanskriti party": "IND",
+    "nepal sangyhia samajbadi party (ekal chunab chinha)": "IND",
+    "janadesh party nepal (ekal chunab chinha)": "IND",
+    "rastriya janamukti party": "IND",
+    "gatishil loktantrik party": "IND",
     # Independent
     "independent": "IND", "ind": "IND",
     "\u0938\u094d\u0935\u0924\u0928\u094d\u0924\u094d\u0930": "IND",
