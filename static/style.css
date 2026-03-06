@@ -1078,6 +1078,13 @@ footer .footer-sub {
     color: rgba(255,255,255,0.5);
 }
 
+footer .footer-copy {
+    margin-top: 10px;
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.6);
+    font-weight: 500;
+}
+
 /* ═══════════════════════ LOADING ═══════════════════════ */
 .loading-spinner {
     display: flex;
