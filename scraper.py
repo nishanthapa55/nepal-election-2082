@@ -527,6 +527,9 @@ OKH_API_PARTY_MAP = {
     # Additional OnlineKhabar-specific names
     "माओवादी केन्द्र": "MC",
     "माओवादी": "MC",
+    "नेकपा (माओवादी)": "MC",   # slug=umlmaoist, NOT UML
+    "जसपा, नेपाल": "JSP",
+    "उनेपा": "UNP",
 }
 
 
@@ -566,12 +569,12 @@ class OnlineKhabarAPIScraper(BaseScraper):
                 nickname = p.get("party_nickname", "").strip()
                 our_short = OKH_API_PARTY_MAP.get(nickname)
                 if not our_short:
-                    # Try slug-based matching
+                    # Try slug-based matching (use exact slugs to avoid false matches)
                     slug = p.get("party_slug", "")
                     if "swatantra" in slug: our_short = "RSP"
                     elif "congress" in slug: our_short = "NC"
-                    elif "uml" in slug: our_short = "UML"
-                    elif "communist" in slug: our_short = "MC"
+                    elif slug == "cpn-uml": our_short = "UML"
+                    elif "communist" in slug or "maoist" in slug: our_short = "MC"
 
                 mapped.append({
                     "party_short": our_short,

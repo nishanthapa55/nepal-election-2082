@@ -132,7 +132,15 @@ function getPartyStats() {
     if (okh && okh.parties && okh.parties.length > 0) {
         const okhMap = {};
         okh.parties.forEach(p => {
-            if (p.party_short) okhMap[p.party_short] = p;
+            if (!p.party_short) return;
+            if (okhMap[p.party_short]) {
+                // Aggregate duplicates instead of overwriting
+                okhMap[p.party_short].leading += (p.leading || 0);
+                okhMap[p.party_short].won += (p.won || 0);
+                okhMap[p.party_short].total += (p.total || 0);
+            } else {
+                okhMap[p.party_short] = {...p};
+            }
         });
 
         // Build pratakshya (direct FPTP) votes map from DB
