@@ -256,7 +256,7 @@ def api_party_results(party_id):
 @app.route("/api/leading")
 @cached("leading")
 def api_leading():
-    """Get the leading candidate in each constituency."""
+    """Get the leading candidate in each constituency (one per constituency)."""
     # Subquery to get max votes per constituency
     subq = (
         db.session.query(
@@ -274,8 +274,13 @@ def api_leading():
         .all()
     )
 
+    # Deduplicate: one leader per constituency (pick first if tied)
+    seen_constituencies = set()
     data = []
     for r in leaders:
+        if r.constituency_id in seen_constituencies:
+            continue
+        seen_constituencies.add(r.constituency_id)
         c = Constituency.query.get(r.constituency_id)
         data.append({
             "constituency": c.to_dict() if c else {},

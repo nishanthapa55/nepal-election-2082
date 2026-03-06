@@ -274,11 +274,11 @@ function renderHemicycle() {
 
     svg.innerHTML = circles;
 
-    // Update center number
-    const totalWon = stats.reduce((s, p) => s + p.total_seats, 0);
+    // Update center number — use counting + declared from summary for consistency
+    const totalActive = summaryData ? (summaryData.counting + summaryData.declared) : stats.reduce((s, p) => s + p.total_seats, 0);
     const hemiNum = document.getElementById("hemiNumber");
     if (hemiNum) {
-        hemiNum.textContent = toNepali(totalWon > 0 ? totalWon : 165);
+        hemiNum.textContent = toNepali(totalActive > 0 ? totalActive : 165);
     }
 }
 

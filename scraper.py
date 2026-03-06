@@ -198,6 +198,14 @@ class BaseScraper:
 
     def __init__(self):
         self.session = requests.Session()
+        # Increase connection pool to match worker count
+        adapter = requests.adapters.HTTPAdapter(
+            pool_connections=30,
+            pool_maxsize=30,
+            max_retries=1,
+        )
+        self.session.mount("https://", adapter)
+        self.session.mount("http://", adapter)
         self.session.headers.update({
             "User-Agent": random.choice(USER_AGENTS),
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -726,7 +734,13 @@ class ScraperCoordinator:
 
             key = (candidate.lower(), constituency.lower() if constituency else "")
             if key not in reconciled or votes > reconciled[key]["votes"]:
+                # Preserve is_elected from previous entry if new entry doesn't have it
+                if key in reconciled and reconciled[key].get("is_elected") and not r.get("is_elected"):
+                    r["is_elected"] = True
                 reconciled[key] = r
+            elif key in reconciled and r.get("is_elected"):
+                # Even if votes aren't higher, preserve elected status
+                reconciled[key]["is_elected"] = True
 
         logger.info(f"Reconciled {len(raw_results)} raw -> {len(reconciled)} unique")
 
