@@ -77,23 +77,23 @@ CONSTITUENCY_COUNTS = {
 
 # Major political parties of Nepal
 PARTIES = [
-    {"name": "Nepali Congress", "short_name": "NC", "short_name_np": "कांग्रेस", "name_np": "नेपाली काँग्रेस", "color": "#0066CC", "logo_url": "/static/logos/nc.svg"},
-    {"name": "CPN (UML)", "short_name": "UML", "short_name_np": "एमाले", "name_np": "नेकपा (एमाले)", "color": "#FF0000", "logo_url": "/static/logos/uml.svg"},
-    {"name": "CPN (Maoist Centre)", "short_name": "MC", "short_name_np": "माओवादी", "name_np": "नेकपा (माओवादी केन्द्र)", "color": "#CC0000", "logo_url": "/static/logos/mc.svg"},
-    {"name": "Rastriya Swatantra Party", "short_name": "RSP", "short_name_np": "रास्वपा", "name_np": "राष्ट्रिय स्वतन्त्र पार्टी", "color": "#FF6600", "logo_url": "/static/logos/rsp.svg"},
-    {"name": "Rastriya Prajatantra Party", "short_name": "RPP", "short_name_np": "राप्रपा", "name_np": "राष्ट्रिय प्रजातन्त्र पार्टी", "color": "#FFD700", "logo_url": "/static/logos/rpp.svg"},
-    {"name": "Janata Samajbadi Party", "short_name": "JSP", "short_name_np": "जसपा", "name_np": "जनता समाजवादी पार्टी", "color": "#008000", "logo_url": "/static/logos/jsp.svg"},
+    {"name": "Nepali Congress", "short_name": "NC", "short_name_np": "कांग्रेस", "name_np": "नेपाली काँग्रेस", "color": "#0066CC", "logo_url": "/static/logos/nc.jpg"},
+    {"name": "CPN (UML)", "short_name": "UML", "short_name_np": "एमाले", "name_np": "नेकपा (एमाले)", "color": "#FF0000", "logo_url": "/static/logos/uml.jpg"},
+    {"name": "CPN (Maoist Centre)", "short_name": "MC", "short_name_np": "माओवादी", "name_np": "नेकपा (माओवादी केन्द्र)", "color": "#CC0000", "logo_url": "/static/logos/mc.jpg"},
+    {"name": "Rastriya Swatantra Party", "short_name": "RSP", "short_name_np": "रास्वपा", "name_np": "राष्ट्रिय स्वतन्त्र पार्टी", "color": "#FF6600", "logo_url": "/static/logos/rsp.jpg"},
+    {"name": "Rastriya Prajatantra Party", "short_name": "RPP", "short_name_np": "राप्रपा", "name_np": "राष्ट्रिय प्रजातन्त्र पार्टी", "color": "#FFD700", "logo_url": "/static/logos/rpp.jpg"},
+    {"name": "Janata Samajbadi Party", "short_name": "JSP", "short_name_np": "जसपा", "name_np": "जनता समाजवादी पार्टी", "color": "#008000", "logo_url": "/static/logos/jsp.png"},
     {"name": "CPN (Unified Socialist)", "short_name": "US", "short_name_np": "एकीकृत समाजवादी", "name_np": "नेकपा (एकीकृत समाजवादी)", "color": "#990000", "logo_url": "/static/logos/us.svg"},
     {"name": "Loktantrik Samajbadi Party", "short_name": "LSP", "short_name_np": "लोसपा", "name_np": "लोकतान्त्रिक समाजवादी पार्टी", "color": "#336699", "logo_url": "/static/logos/lsp.svg"},
-    {"name": "Janamat Party", "short_name": "JP", "short_name_np": "जनमत", "name_np": "जनमत पार्टी", "color": "#9933FF", "logo_url": "/static/logos/jp.svg"},
-    {"name": "Nagarik Unmukti Party", "short_name": "NUP", "short_name_np": "नाउपा", "name_np": "नागरिक उन्मुक्ति पार्टी", "color": "#00CC99", "logo_url": "/static/logos/nup.svg"},
-    {"name": "Nepal Workers Peasants Party", "short_name": "NWPP", "short_name_np": "नेमकिपा", "name_np": "नेपाल मजदुर किसान पार्टी", "color": "#663300", "logo_url": "/static/logos/nwpp.svg"},
-    {"name": "Ujaylo Nepal Party", "short_name": "UNP", "short_name_np": "उजनेपा", "name_np": "उज्यालो नेपाल पार्टी", "color": "#FFA500", "logo_url": "/static/logos/unp.svg"},
-    {"name": "Shram Sanskriti Party", "short_name": "SSP", "short_name_np": "श्रमसंपा", "name_np": "श्रम संस्कृति पार्टी", "color": "#8B4513", "logo_url": "/static/logos/ssp.svg"},
-    {"name": "Pragatishil Loktantrik Party", "short_name": "PLP", "short_name_np": "प्रलोपा", "name_np": "प्रगतिशील लोकतान्त्रिक पार्टी", "color": "#4B0082", "logo_url": "/static/logos/plp.svg"},
+    {"name": "Janamat Party", "short_name": "JP", "short_name_np": "जनमत", "name_np": "जनमत पार्टी", "color": "#9933FF", "logo_url": "/static/logos/jp.jpg"},
+    {"name": "Nagarik Unmukti Party", "short_name": "NUP", "short_name_np": "नाउपा", "name_np": "नागरिक उन्मुक्ति पार्टी", "color": "#00CC99", "logo_url": "/static/logos/nup.jpg"},
+    {"name": "Nepal Workers Peasants Party", "short_name": "NWPP", "short_name_np": "नेमकिपा", "name_np": "नेपाल मजदुर किसान पार्टी", "color": "#663300", "logo_url": "/static/logos/nwpp.jpg"},
+    {"name": "Ujaylo Nepal Party", "short_name": "UNP", "short_name_np": "उजनेपा", "name_np": "उज्यालो नेपाल पार्टी", "color": "#FFA500", "logo_url": "/static/logos/unp.jpg"},
+    {"name": "Shram Sanskriti Party", "short_name": "SSP", "short_name_np": "श्रमसंपा", "name_np": "श्रम संस्कृति पार्टी", "color": "#8B4513", "logo_url": "/static/logos/ssp.jpg"},
+    {"name": "Pragatishil Loktantrik Party", "short_name": "PLP", "short_name_np": "प्रलोपा", "name_np": "प्रगतिशील लोकतान्त्रिक पार्टी", "color": "#4B0082", "logo_url": "/static/logos/plp.jpg"},
     {"name": "Nepal Sadbhavana Party", "short_name": "NSP", "short_name_np": "नेसपा", "name_np": "नेपाल सद्भावना पार्टी", "color": "#228B22", "logo_url": "/static/logos/nsp.svg"},
-    {"name": "Rastriya Janamorcha", "short_name": "RJM", "short_name_np": "राजमो", "name_np": "राष्ट्रिय जनमोर्चा", "color": "#B22222", "logo_url": "/static/logos/rjm.svg"},
-    {"name": "Independent", "short_name": "IND", "short_name_np": "स्वतन्त्र", "name_np": "स्वतन्त्र", "color": "#999999", "logo_url": "/static/logos/ind.svg"},
+    {"name": "Rastriya Janamorcha", "short_name": "RJM", "short_name_np": "राजमो", "name_np": "राष्ट्रिय जनमोर्चा", "color": "#B22222", "logo_url": "/static/logos/rjm.jpg"},
+    {"name": "Independent", "short_name": "IND", "short_name_np": "स्वतन्त्र", "name_np": "स्वतन्त्र", "color": "#999999", "logo_url": "/static/logos/ind.png"},
 ]
 
 
