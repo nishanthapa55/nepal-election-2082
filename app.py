@@ -159,14 +159,17 @@ def api_summary():
     total_votes_cast = db.session.query(func.sum(Result.votes)).scalar() or 0
 
     # Get fast OnlineKhabar API party data if available
-    from scraper import get_okh_party_cache, get_okh_cache_timestamp
-    okh_data = get_okh_party_cache()
     okh_party_summary = None
-    if okh_data:
-        okh_party_summary = {
-            "parties": okh_data,
-            "timestamp": get_okh_cache_timestamp(),
-        }
+    try:
+        from scraper import get_okh_party_cache, get_okh_cache_timestamp
+        okh_data = get_okh_party_cache()
+        if okh_data:
+            okh_party_summary = {
+                "parties": okh_data,
+                "timestamp": get_okh_cache_timestamp(),
+            }
+    except Exception as e:
+        logger.error(f"Failed to get OKH party cache: {e}")
 
     return {
         "total_constituencies": total_constituencies,
@@ -185,6 +188,32 @@ def api_summary():
         "okh_party_summary": okh_party_summary,
         "last_updated": datetime.now(timezone.utc).isoformat(),
     }
+
+
+@app.route("/api/health")
+def api_health():
+    """Diagnostic endpoint to check what's running."""
+    import sys
+    import traceback
+    info = {
+        "python_version": sys.version,
+        "status": "ok",
+    }
+    try:
+        info["constituency_count"] = Constituency.query.count()
+        info["result_count"] = Result.query.count()
+        info["declared"] = Constituency.query.filter_by(status="declared").count()
+        info["counting"] = Constituency.query.filter_by(status="counting").count()
+    except Exception as e:
+        info["db_error"] = str(e)
+    try:
+        from scraper import get_okh_party_cache, get_okh_cache_timestamp
+        cache = get_okh_party_cache()
+        info["okh_cache_size"] = len(cache) if cache else 0
+        info["okh_timestamp"] = get_okh_cache_timestamp()
+    except Exception as e:
+        info["okh_error"] = traceback.format_exc()
+    return jsonify(info)
 
 
 @app.route("/api/provinces")
