@@ -177,6 +177,15 @@ PARTY_NAME_MAP = {
     "janadesh party nepal (ekal chunab chinha)": "IND",
     "rastriya janamukti party": "IND",
     "gatishil loktantrik party": "IND",
+    # Batch 3: additional unresolved parties
+    "rastriya urjashil party, nepal": "IND",
+    "nagarik sarwochata party nepal (ekal chunab chinha)": "IND",
+    "nepal loktantrik party": "IND",
+    "rastriya janamat party": "IND",
+    "samabeshi samajbadi party nepal": "IND",
+    "united nepal democratic party": "IND",
+    "rastriya nagarik party": "IND",
+    "nepal matribhoomi party": "IND",
     # Independent
     "independent": "IND", "ind": "IND",
     "\u0938\u094d\u0935\u0924\u0928\u094d\u0924\u094d\u0930": "IND",
@@ -346,17 +355,33 @@ class EkantipurScraper(BaseScraper):
         batch = all_urls[:]
         logger.info(f"[Ekantipur] Fetching all {len(batch)} constituencies")
 
-        # Fetch pages with thread pool — 25 workers for fast parallel fetching
+        # Fetch pages with thread pool — 20 workers for reliable parallel fetching
         def fetch_one(item):
             cid, cname, url = item
-            try:
-                resp = self.fetch(url, timeout=10)
-                page_results = self._parse_constituency_page(resp.text, cname)
-                return page_results, None
-            except Exception as e:
-                return [], f"{cname}: {str(e)[:80]}"
+            for attempt in range(3):
+                try:
+                    resp = self.fetch(url, timeout=12)
+                    if len(resp.text) < 5000:
+                        # Page too small — likely blocked or empty; retry
+                        if attempt < 2:
+                            time.sleep(1)
+                            continue
+                    page_results = self._parse_constituency_page(resp.text, cname)
+                    if page_results:
+                        return page_results, None
+                    # Got HTML but no candidates — could be transient; retry
+                    if attempt < 2:
+                        time.sleep(0.5)
+                        continue
+                    return page_results, None
+                except Exception as e:
+                    if attempt < 2:
+                        time.sleep(1)
+                        continue
+                    return [], f"{cname}: {str(e)[:80]}"
+            return [], f"{cname}: all retries failed"
 
-        with ThreadPoolExecutor(max_workers=25) as executor:
+        with ThreadPoolExecutor(max_workers=20) as executor:
             futures = {executor.submit(fetch_one, item): item for item in batch}
             for future in as_completed(futures, timeout=60):
                 try:
@@ -841,20 +866,25 @@ class ScraperCoordinator:
                 Party.name.ilike(f"%{result['party_name']}%")
             ).first()
 
-        # Find constituency
+        # Find constituency — use exact match first (name comes from our DB)
         constituency = None
         if constituency_name:
-            constituency = Constituency.query.filter(
-                Constituency.name.ilike(f"%{constituency_name}%")
+            constituency = Constituency.query.filter_by(
+                name=constituency_name
             ).first()
             if not constituency:
+                # Fallback: parse district-number pattern
                 match = re.match(r'(.+?)\s*[-\u2013]\s*(\d+)', constituency_name)
                 if match:
                     district_part = match.group(1).strip()
                     number = int(match.group(2))
-                    district = District.query.filter(
-                        District.name.ilike(f"%{district_part}%")
+                    district = District.query.filter_by(
+                        name=district_part
                     ).first()
+                    if not district:
+                        district = District.query.filter(
+                            District.name.ilike(f"%{district_part}%")
+                        ).first()
                     if district:
                         constituency = Constituency.query.filter_by(
                             district_id=district.id,
