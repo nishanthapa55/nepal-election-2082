@@ -498,13 +498,6 @@ class EkantipurScraper(BaseScraper):
 
 # ──────────── OnlineKhabar API (Fast Party Summary) ────────────
 
-# Global cache for the fast OnlineKhabar API party summary
-_okh_party_cache = {
-    "data": None,
-    "timestamp": None,
-}
-
-
 # Mapping from OnlineKhabar Nepali party_nickname to our DB short_name
 OKH_API_PARTY_MAP = {
     "रास्वपा": "RSP",
@@ -548,7 +541,6 @@ class OnlineKhabarAPIScraper(BaseScraper):
 
     def run(self):
         """Fetch party summary and store in global cache."""
-        global _okh_party_cache
         errors = []
         try:
             resp = self.session.get(self.API_URL, timeout=self.timeout)
@@ -586,8 +578,8 @@ class OnlineKhabarAPIScraper(BaseScraper):
                     "color": p.get("party_color", ""),
                 })
 
-            _okh_party_cache["data"] = mapped
-            _okh_party_cache["timestamp"] = datetime.now(timezone.utc).isoformat()
+            from okh_cache import set_okh_party_cache
+            set_okh_party_cache(mapped)
 
             total_leading = sum(p["leading"] for p in mapped)
             total_won = sum(p["won"] for p in mapped)
@@ -600,16 +592,6 @@ class OnlineKhabarAPIScraper(BaseScraper):
             errors.append(f"OnlineKhabar API: {str(e)[:100]}")
             logger.error(f"[OnlineKhabar API] {errors[-1]}")
             return [], errors
-
-
-def get_okh_party_cache():
-    """Return the cached OnlineKhabar party summary (or None if not yet fetched)."""
-    return _okh_party_cache.get("data")
-
-
-def get_okh_cache_timestamp():
-    """Return the timestamp of the last OnlineKhabar API fetch."""
-    return _okh_party_cache.get("timestamp")
 
 
 # ──────────────────────── OnlineKhabar Scraper ────────────────────────

@@ -161,7 +161,7 @@ def api_summary():
     # Get fast OnlineKhabar API party data if available
     okh_party_summary = None
     try:
-        from scraper import get_okh_party_cache, get_okh_cache_timestamp
+        from okh_cache import get_okh_party_cache, get_okh_cache_timestamp
         okh_data = get_okh_party_cache()
         if okh_data:
             okh_party_summary = {
@@ -207,7 +207,7 @@ def api_health():
     except Exception as e:
         info["db_error"] = str(e)
     try:
-        from scraper import get_okh_party_cache, get_okh_cache_timestamp
+        from okh_cache import get_okh_party_cache, get_okh_cache_timestamp
         cache = get_okh_party_cache()
         info["okh_cache_size"] = len(cache) if cache else 0
         info["okh_timestamp"] = get_okh_cache_timestamp()
